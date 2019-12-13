@@ -30,6 +30,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 
+//Test change XDD
+
 public class MainActivity extends Activity {
     private final static String TAG = "FPGA_FIFO Activity";
 
