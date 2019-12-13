@@ -28,12 +28,14 @@
 
     <TextView
         android:id="@+id/tvRead"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_width="395dp"
+        android:layout_height="420dp"
+        android:layout_below="@+id/btOpen"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/btOpen"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="193dp"
+        android:layout_marginRight="0dp"
         android:text="Read Data : " />
 
     <Button
@@ -53,5 +55,50 @@
         android:layout_toRightOf="@+id/btOpen"
         android:onClick="onClickClose"
         android:text="Close" />
+
+    <Button
+        android:id="@+id/testSound"
+        android:layout_width="89dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btWrite"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="-6dp"
+        android:layout_toEndOf="@+id/btClose"
+        android:layout_toRightOf="@+id/btClose"
+        android:onClick="onClickAAA"
+        android:text="AAAA" />
+
+    <EditText
+        android:id="@+id/sampleData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="24dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="201dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="a,b,x,y,z" />
+
+    <Button
+        android:id="@+id/sendSample"
+        android:layout_width="148dp"
+        android:layout_height="44dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="227dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_toEndOf="@+id/sampleData"
+        android:layout_toRightOf="@+id/sampleData"
+        android:onClick="sendSample"
+        android:text="sendSample" />
 
 </RelativeLayout>

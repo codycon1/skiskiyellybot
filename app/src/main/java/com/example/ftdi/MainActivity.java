@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -17,8 +18,10 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import com.ftdi.j2xx.FT_Device;
 import com.ftdi.j2xx.D2xxManager;
+
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,6 +32,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+
+import in.excogitation.zentone.*;
+import in.excogitation.zentone.library.ToneStoppedListener;
+import in.excogitation.zentone.library.ZenTone;
 
 //Test change XDD
 
@@ -48,10 +55,12 @@ public class MainActivity extends Activity {
     Button btOpen;
     Button btWrite;
     Button btClose;
+    EditText sampleData;
 
     boolean mThreadIsStopped = true;
     Handler mHandler = new Handler();
     Thread mThread;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +73,8 @@ public class MainActivity extends Activity {
         btOpen = (Button) findViewById(R.id.btOpen);
         btWrite = (Button) findViewById(R.id.btWrite);
         btClose = (Button) findViewById(R.id.btClose);
+
+        sampleData = (EditText) findViewById(R.id.sampleData);
 
         updateView(false);
 
@@ -78,6 +89,23 @@ public class MainActivity extends Activity {
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(mUsbReceiver, filter);
 
+    }
+
+
+    //Sample button for tone generation
+
+    public void onClickAAA(View v){
+        ZenTone.getInstance().generate(660, 1, 1.0f, new ToneStoppedListener() {
+            @Override
+            public void onToneStopped() {
+                Boolean isPlaying = false;
+            }
+        });
+    }
+
+    public void sendSample(View v){
+        feedback(sampleData.getText().toString());
+        //tvRead.append(sampleData.getText().toString());
     }
 
     public void onClickOpen(View v) {
@@ -200,7 +228,8 @@ public class MainActivity extends Activity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                tvRead.append(String.copyValueOf(rchar,0,mReadSize));
+                                tvRead.append(String.copyValueOf(rchar,0,mReadSize)); // Here's the line that updates the data stream
+
                             }
                         });
 
@@ -209,6 +238,23 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    public void feedback(String input){
+        String[] stringval = input.split(",");
+        int[] values = {0,0,0,0,0};
+        for(int i = 0; i < 5; i++){
+            values[i] = Integer.parseInt(stringval[i]);
+        } // Data values are now split CSV style
+
+        if(values[0] <= 100){
+            ZenTone.getInstance().generate(values[0]*10, 1, 1.0f, new ToneStoppedListener() {
+                @Override
+                public void onToneStopped() {
+                    Boolean isPlaying = false;
+                }
+            });
+        }
+    }
 
     private void closeDevice() {
         mThreadIsStopped = true;
