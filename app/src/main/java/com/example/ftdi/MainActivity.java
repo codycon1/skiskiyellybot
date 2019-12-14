@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 import com.ftdi.j2xx.FT_Device;
 import com.ftdi.j2xx.D2xxManager;
@@ -32,10 +33,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-
+import 	android.text.method.ScrollingMovementMethod;
 import in.excogitation.zentone.*;
 import in.excogitation.zentone.library.ToneStoppedListener;
 import in.excogitation.zentone.library.ZenTone;
+
+import java.io.IOException;
+import java.lang.StringBuilder;
+import java.lang.Math.*;
 
 //Test change XDD
 
@@ -61,11 +66,17 @@ public class MainActivity extends Activity {
     Handler mHandler = new Handler();
     Thread mThread;
 
+    String buf = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        TextView textView = (TextView) findViewById(R.id.tvRead);
+        textView.setMovementMethod(new ScrollingMovementMethod());
 
         tvRead = (TextView) findViewById(R.id.tvRead);
         etWrite = (EditText) findViewById(R.id.etWrite);
@@ -104,7 +115,7 @@ public class MainActivity extends Activity {
     }
 
     public void sendSample(View v){
-        feedback(sampleData.getText().toString());
+        feedback(sampleData.getText().toString().split(","));
         //tvRead.append(sampleData.getText().toString());
     }
 
@@ -126,7 +137,7 @@ public class MainActivity extends Activity {
 
             ftDev.setLatencyTimer((byte)16);
 
-            String writeString = etWrite.getText().toString();
+            String writeString = "s";
             byte[] writeByte = writeString.getBytes();
             ftDev.write(writeByte, writeString.length());
         }
@@ -228,8 +239,12 @@ public class MainActivity extends Activity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                tvRead.append(String.copyValueOf(rchar,0,mReadSize)); // Here's the line that updates the data stream
 
+                                String x = String.copyValueOf(rchar,0,mReadSize);
+                                String[] y = x.split(",",5);
+
+                                //tvRead.append(x); // Here's the line that updates the data stream
+                                feedback(y);
                             }
                         });
 
@@ -239,21 +254,26 @@ public class MainActivity extends Activity {
         }
     };
 
-    public void feedback(String input){
-        String[] stringval = input.split(",");
+    public void feedback(String[] input) {
+
         int[] values = {0,0,0,0,0};
         for(int i = 0; i < 5; i++){
-            values[i] = Integer.parseInt(stringval[i]);
+            try{
+                double tmp = Integer.parseInt(input[i]);
+                values[i] = (int) tmp;
+                tvRead.append(tmp+"\n");
+            }
+            catch (Exception NumberFormatException){}
         } // Data values are now split CSV style
 
-        if(values[0] <= 100){
-            ZenTone.getInstance().generate(values[0]*10, 1, 1.0f, new ToneStoppedListener() {
+        //if(values[0] <= 1000){
+            ZenTone.getInstance().generate(values[0], 1, 1.0f, new ToneStoppedListener() {
                 @Override
                 public void onToneStopped() {
                     Boolean isPlaying = false;
                 }
             });
-        }
+        //}
     }
 
     private void closeDevice() {

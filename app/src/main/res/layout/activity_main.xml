@@ -8,6 +8,25 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
+    <TextView
+        android:id="@+id/tvRead2"
+        android:layout_width="184dp"
+        android:layout_height="316dp"
+        android:layout_below="@+id/btOpen"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="211dp"
+        android:layout_marginTop="192dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginBottom="0dp"
+        android:clickable="true"
+        android:scrollbarAlwaysDrawHorizontalTrack="false"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical"
+        android:text="Raw Data : " />
+
     <EditText
         android:id="@+id/etWrite"
         android:layout_width="wrap_content"
@@ -28,14 +47,19 @@
 
     <TextView
         android:id="@+id/tvRead"
-        android:layout_width="395dp"
-        android:layout_height="420dp"
+        android:layout_width="199dp"
+        android:layout_height="298dp"
         android:layout_below="@+id/btOpen"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginTop="193dp"
-        android:layout_marginRight="0dp"
+        android:layout_marginTop="194dp"
+        android:layout_marginRight="196dp"
+        android:clickable="true"
+        android:scrollbarAlwaysDrawHorizontalTrack="false"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical"
         android:text="Read Data : " />
 
     <Button
