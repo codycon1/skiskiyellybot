@@ -5,8 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbManager;
 import android.media.AudioManager;
-import android.os.Bundle;
-import android.os.Handler;
+import android.os.*;
 import android.util.Log;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -38,7 +37,8 @@ import in.excogitation.zentone.*;
 import in.excogitation.zentone.library.ToneStoppedListener;
 import in.excogitation.zentone.library.ZenTone;
 
-import java.io.IOException;
+import java.io.*;
+import java.lang.Object;
 import java.lang.StringBuilder;
 import java.lang.Math.*;
 
@@ -67,11 +67,16 @@ public class MainActivity extends Activity {
     Thread mThread;
 
     String buf = "";
-
-
+    String filepath;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        filepath = MainActivity.this.getFilesDir() +"//" + "apples";
+        File samples = new File(filepath);
+        try {
+            samples.createNewFile();
+        } catch (Exception e) {
+            tvRead.append(e.toString());
+        }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -115,8 +120,17 @@ public class MainActivity extends Activity {
     }
 
     public void sendSample(View v){
-        feedback(sampleData.getText().toString().split(","));
-        //tvRead.append(sampleData.getText().toString());
+        try {
+            FileInputStream fis = new FileInputStream (new File(filepath));
+            byte[] dataaray = new byte[fis.available()];
+            while (fis.read(dataaray) != -1) {
+                tvRead.append(new String(dataaray));
+            }
+            fis.close();
+        }
+        catch (Exception e) {
+            tvRead.append("Exception" + "File write failed: " + e.toString());
+        }
     }
 
     public void onClickOpen(View v) {
@@ -242,7 +256,8 @@ public class MainActivity extends Activity {
 
                                 String x = String.copyValueOf(rchar,0,mReadSize);
                                 String[] y = x.split(",",5);
-
+                                writeToFile(x);
+                                tvRead.clearComposingText();
                                 //tvRead.append(x); // Here's the line that updates the data stream
                                 feedback(y);
                             }
@@ -255,13 +270,15 @@ public class MainActivity extends Activity {
     };
 
     public void feedback(String[] input) {
-
+        if(input[4] != null){
+            return;
+        }
         int[] values = {0,0,0,0,0};
         for(int i = 0; i < 5; i++){
             try{
                 double tmp = Integer.parseInt(input[i]);
                 values[i] = (int) tmp;
-                tvRead.append(tmp+"\n");
+                //tvRead.append(tmp+"\n");
             }
             catch (Exception NumberFormatException){}
         } // Data values are now split CSV style
@@ -274,6 +291,17 @@ public class MainActivity extends Activity {
                 }
             });
         //}
+    }
+    private void writeToFile(String data) {
+        try {
+            OutputStream fos = new FileOutputStream(filepath, true);
+            fos.write(data.getBytes());
+            fos.close();
+            //tvRead.append(MainActivity.this.getFilesDir()+"");
+        }
+        catch (IOException e) {
+            tvRead.append("Exception" + "File write failed: " + e.toString());
+        }
     }
 
     private void closeDevice() {
