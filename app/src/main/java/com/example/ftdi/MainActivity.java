@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.hardware.usb.UsbManager;
 import android.media.AudioManager;
 import android.os.*;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -33,6 +34,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import 	android.text.method.ScrollingMovementMethod;
+import android.widget.Toast;
+
 import in.excogitation.zentone.*;
 import in.excogitation.zentone.library.ToneStoppedListener;
 import in.excogitation.zentone.library.ZenTone;
@@ -41,6 +44,8 @@ import java.io.*;
 import java.lang.Object;
 import java.lang.StringBuilder;
 import java.lang.Math.*;
+import java.util.Locale;
+import java.util.Random;
 
 //Test change XDD
 
@@ -68,6 +73,9 @@ public class MainActivity extends Activity {
 
     String buf = "";
     String filepath;
+
+    String[] insultString= {"Disappointment", "Melon", "Thundercunt", "Asshat", "Assclown", "Dingus", "Peasant", "Douchecanoe", "Troglodite", "Neanderthal"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         filepath = MainActivity.this.getFilesDir() +"//" + "apples";
@@ -93,6 +101,25 @@ public class MainActivity extends Activity {
         sampleData = (EditText) findViewById(R.id.sampleData);
 
         updateView(false);
+
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    int ttsLang = textToSpeech.setLanguage(Locale.US);
+
+                    if (ttsLang == TextToSpeech.LANG_MISSING_DATA
+                            || ttsLang == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("TTS", "The Language is not supported!");
+                    } else {
+                        Log.i("TTS", "Language Supported.");
+                    }
+                    Log.i("TTS", "Initialization success.");
+                } else {
+                    Toast.makeText(getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
 
         try {
             ftD2xx = D2xxManager.getInstance(this);
@@ -292,6 +319,19 @@ public class MainActivity extends Activity {
             });
         //}
     }
+
+    /*public void tts(int in){
+        if(in == 0){
+            String data = getRandom(insultString);
+            textToSpeech.speak(data, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }*/
+
+    public static String getRandom(String[] array) {
+        int rnd = new Random().nextInt(array.length);
+        return array[rnd];
+    }
+
     private void writeToFile(String data) {
         try {
             OutputStream fos = new FileOutputStream(filepath, true);
