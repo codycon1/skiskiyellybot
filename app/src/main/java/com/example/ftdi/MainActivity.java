@@ -17,6 +17,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ScrollView;
 
@@ -47,6 +49,8 @@ import java.lang.Math.*;
 import java.util.Locale;
 import java.util.Random;
 
+import static java.lang.String.valueOf;
+
 //Test change XDD
 
 public class MainActivity extends Activity {
@@ -65,16 +69,27 @@ public class MainActivity extends Activity {
     Button btOpen;
     Button btWrite;
     Button btClose;
-    EditText sampleData;
+    Switch ttsToggle;
+    Switch cussToggle;
+    Switch beepToggle;
+    SeekBar input1Slider;
+
+    int bottomThreshold = 25;
+    int middleThreshold = 50;
 
     boolean mThreadIsStopped = true;
     Handler mHandler = new Handler();
+
+    Handler sampleDataHandler = new Handler();
+    int delay = 1000; // ms
+
     Thread mThread;
 
     String buf = "";
     String filepath;
 
-    String[] insultString= {"Disappointment", "Melon", "Thundercunt", "Asshat", "Assclown", "Dingus", "Peasant", "Douchecanoe", "Troglodite", "Neanderthal"};
+    TextToSpeechFeedback tts;
+    BeepFeedback beep;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,29 +112,17 @@ public class MainActivity extends Activity {
         btOpen = (Button) findViewById(R.id.btOpen);
         btWrite = (Button) findViewById(R.id.btWrite);
         btClose = (Button) findViewById(R.id.btClose);
+        ttsToggle = (Switch) findViewById(R.id.ttsToggle);
+        cussToggle = (Switch) findViewById(R.id.cussToggle);
+        beepToggle = (Switch) findViewById(R.id.beepToggle);
 
-        sampleData = (EditText) findViewById(R.id.sampleData);
+        input1Slider = (SeekBar) findViewById(R.id.input1Slider);
+
 
         updateView(false);
 
-        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    int ttsLang = textToSpeech.setLanguage(Locale.US);
-
-                    if (ttsLang == TextToSpeech.LANG_MISSING_DATA
-                            || ttsLang == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        Log.e("TTS", "The Language is not supported!");
-                    } else {
-                        Log.i("TTS", "Language Supported.");
-                    }
-                    Log.i("TTS", "Initialization success.");
-                } else {
-                    Toast.makeText(getApplicationContext(), "TTS Initialization failed!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+        tts = new TextToSpeechFeedback(getApplicationContext());
+        beep = new BeepFeedback(getApplicationContext());
 
         try {
             ftD2xx = D2xxManager.getInstance(this);
@@ -132,6 +135,14 @@ public class MainActivity extends Activity {
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(mUsbReceiver, filter);
 
+        sampleDataHandler.postDelayed(new Runnable(){
+            public void run(){
+                String[] sampleInput = {"0","0","0","0","0"};
+                sampleInput[0] = valueOf(input1Slider.getProgress());
+                process(sampleInput);
+                sampleDataHandler.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
 
@@ -144,21 +155,9 @@ public class MainActivity extends Activity {
                 Boolean isPlaying = false;
             }
         });
+        tts.good();
     }
 
-    public void sendSample(View v){
-        try {
-            FileInputStream fis = new FileInputStream (new File(filepath));
-            byte[] dataaray = new byte[fis.available()];
-            while (fis.read(dataaray) != -1) {
-                tvRead.append(new String(dataaray));
-            }
-            fis.close();
-        }
-        catch (Exception e) {
-            tvRead.append("Exception" + "File write failed: " + e.toString());
-        }
-    }
 
     public void onClickOpen(View v) {
         openDevice();
@@ -280,13 +279,13 @@ public class MainActivity extends Activity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-
                                 String x = String.copyValueOf(rchar,0,mReadSize);
                                 String[] y = x.split(",",5);
                                 writeToFile(x);
                                 tvRead.clearComposingText();
                                 //tvRead.append(x); // Here's the line that updates the data stream
-                                feedback(y);
+                                // TODO: Check input data for errors; pass if fucked up
+                                process(y);
                             }
                         });
 
@@ -296,8 +295,30 @@ public class MainActivity extends Activity {
         }
     };
 
-    public void feedback(String[] input) {
-        if(input[4] != null){
+    public void process(String[] input) {
+        int[] values = {0,0,0,0,0};
+        tvRead.append(input[0]+"\n");
+        for(int i = 0; i < 5; i++){
+            try{
+                double tmp = Integer.parseInt(input[i]);
+                values[i] = (int) tmp;
+                //tvRead.append(tmp+"\n");
+            }
+            catch (Exception NumberFormatException){}
+        } // Data values are now split CSV style
+
+        // TODO: Replace these values with calibration variables, make calibration blocks
+        if(values[0] <= bottomThreshold){
+            feedback(0, values[0]);
+        }
+        else if (values[0] <= middleThreshold && values[0] > bottomThreshold){
+            feedback(1, values[0]);
+        }
+        else if (values[0] > middleThreshold){
+            feedback(2, values[0]);
+        }
+
+       /* if(input[4] != null){
             return;
         }
         int[] values = {0,0,0,0,0};
@@ -317,19 +338,44 @@ public class MainActivity extends Activity {
                     Boolean isPlaying = false;
                 }
             });
-        //}
+        //}*/
     }
 
-    /*public void tts(int in){
-        if(in == 0){
-            String data = getRandom(insultString);
-            textToSpeech.speak(data, TextToSpeech.QUEUE_FLUSH, null);
+    public void feedback(int feedbackType, int value){
+        if(feedbackType == 0){ // Too far back input
+            if(ttsToggle.isChecked()){
+                if(cussToggle.isChecked()){
+                    tts.insult();
+                }
+                else{
+                    tts.bad();
+                }
+            }
+            else if(beepToggle.isChecked()){
+                if(value == 0){
+                    beep.beep(50);
+                }
+                else{
+                    beep.beep(value*10); // Change pitch to value integer
+                }
+            }
         }
-    }*/
-
-    public static String getRandom(String[] array) {
-        int rnd = new Random().nextInt(array.length);
-        return array[rnd];
+        else if(feedbackType == 1){ // Center input
+            if(ttsToggle.isChecked()){
+                tts.good();
+            }
+            else if(beepToggle.isChecked()){
+                beep.beep(value*15);
+            }
+        }
+        else if(feedbackType == 2){ // Too far forward input
+            if(ttsToggle.isChecked()){
+                tts.bad();
+            }
+            else if(beepToggle.isChecked()){
+                beep.beep(value*20);
+            }
+        }
     }
 
     private void writeToFile(String data) {
